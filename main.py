@@ -22,42 +22,44 @@ while True:
                                                                                              variable_parts[1]):
             print("Invalid assignment")
         else:
-            if variable_parts[1].isalpha():
-                if variable_parts[1] in variables:
+            if variable_parts[1].isalpha():  # If the variable on the right is made of letters (another variable)
+                if variable_parts[1] in variables:  # Assign the variable with the value of the right variable
                     variables[variable_parts[0]] = variables[variable_parts[1]]
                 else:
                     print("Unknown variable")
-            else:
+            else:  # The right side is all numbers, so assign it this value
                 variables[variable_parts[0]] = variable_parts[1]
-    else:
+    else:  # There is only a variable
         if re.search("[A-Za-z]+", equation) is not None and len(operators) == 0:
             if re.search(r"[\d]+", equation) is not None:  # Check for valid left side
                 print("Invalid identifier")
-            else:
+            else:  # Print the variable's value if the variable exists
                 print(variables[equation]) if equation in variables else print("Unknown variable")
 
+        # There are digits instead or the user wants to do math with variables
         elif re.search(r"(?<![\w])[-]?[\d]", equation) is not None or len(operators) > 0:
-            vars = re.split(r"\s+[+*/-]+\s+", equation)
-            numbers = deque()
+            vars = re.split(r"\s+[+*/-]+\s+", equation)  # Split all numbers (or variables) by operators
+            numbers = deque()  # This will store all of our numbers for easy access
             for var in vars:
-                if var.isalpha():
-                    numbers.append(variables[var])
-                else:
-                    numbers.append(int(var))
-            try:
+                try:
+                    if var.isalpha():  # If the number is a variable, add its value
+                        numbers.append(variables[var])
+                    else:  # The number is indeed just a number
+                        numbers.append(int(var))
+                except ValueError:
+                    pass
+            try:  # if there was only a digit(s) (no operators), it will skip the loop and print the digit(s)
                 for operator in operators:
-                    if re.match(r"^[+]+$", operator) is not None:
+                    if re.match(r"^[+]+$", operator) is not None:  # Check for addition sign(s)
                         numbers.appendleft(int(numbers.popleft()) + int(numbers.popleft()))
-                    elif re.match(r"^[-]+$", operator) is not None:
-                        if len(operator) % 2 == 0:
+                    elif re.match(r"^[-]+$", operator) is not None:  # Check for subtraction sign(s)
+                        if len(operator) % 2 == 0:  # Two negatives = a positive
                             numbers.appendleft(int(numbers.popleft()) + int(numbers.popleft()))
                         else:
                             numbers.appendleft(int(numbers.popleft()) - int(numbers.popleft()))
                 # The expression is valid if it reduced it to one number
                 print(*numbers) if len(numbers) == 1 else print("Invalid expression")
             except IndexError:
-
                 print("Invalid expression")
-
-        else:
+        else:  # It is something I cannot comprehend
             print("Invalid expression") if equation != "" else ""
