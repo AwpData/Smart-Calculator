@@ -44,20 +44,27 @@ while True:
         elif re.match(r"^[+-]+[\d]+$", equation):  # Checks if user did +#..., it will just print the number positive
             print(re.findall(r"[-]?[\d]+", equation)[0])
         elif re.search(r"(?<![\w])[-]?[\d]", equation) is not None or re.search("[A-Za-z]+", equation) is not None:
-            vars = re.split("([()+*/-]+)", equation)
-            vars = [var.strip() for var in vars if var != " "]
+            if re.search("[*/]{2,}", equation) is not None:
+                print("Invalid expression")
+                continue
+            vars = re.split(r"((?<![\d])[()+*/-]+(?![\d]+))", equation)
+            vars = [var.strip() for var in vars]
             operators = deque()  # This will store all of our operators for easy access (stack)
             computation = deque()  # This will store the postfix expression
             priorities = {"(": 0, "/": 2, "*": 2, "+": 1, "-": 1}
             for var in vars:
                 # If the number is a variable, add its value
-                if var.isalpha() and var in variables:  # Variable that is VALID
+                if var.isalpha() and var in variables:  # Add variable value if it is valid
                     computation.append(variables[var])
-                elif var.isnumeric() or re.match(r"[+-][\d]+$", var) is not None:  # All digits
+                elif re.match(r"[-]*[\d]+$", var) is not None:  # Add digits
                     computation.append(var)
-                elif var == "(":  # Left parenthesis
-                    operators.append("(")
-                elif var == ")":  # Right parenthesis (pop until we find left p)
+                elif re.search(r"[(]+[\d]+", var) is not None:  # Left parenthesis
+                    computation.append("".join(re.findall(r"[\d]+", var)))
+                    for _ in range(len(var) - 1):
+                        operators.append("(")
+
+                elif re.search(r"[\d]+[)]+", var) is not None:  # Right parenthesis (pop until we find left p)
+                    computation.append("".join(re.findall(r"[\d]+", var)))
                     operator = operators.pop()
                     try:
                         while operator != "(":  # Keep adding to computation until we reach the left parenthese
@@ -71,7 +78,7 @@ while True:
                     print("Unknown variable")
                     break
 
-                elif re.match("[+-]+$", var) is not None or re.search("[*/]{2,}", var) is None:  # Signage
+                elif re.match("[+*/-]+", var) is not None:  # Signage
                     if len(var) % 2 == 0 and var.find("-") != -1:  # Two negatives = a positive
                         var = "+"
                     try:
@@ -100,9 +107,7 @@ while True:
 
                 try:
                     num_stack = deque()  # Num_stack will only have #'s that lead to the result
-                    print(computation)
                     while len(computation) > 0:
-                        print(num_stack)
                         sign = computation.popleft()
                         if re.match(r"^[+/*-]$", sign) is not None:
                             num2 = int(num_stack.pop())
