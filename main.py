@@ -1,10 +1,14 @@
 import re
+import sqlite3
 from collections import deque
 
 # TO DO:
-# 1. Try to adjust program so that input doesn't have to have spaces (.replace?)
-# 2. Clean up program, especially the part where I assign num1 and num2
+# 1. Implement database for vars
+# 2. /clear (for vars), /variables (list variables)
+# 3. Up arrow = previous equation?
 
+conn = sqlite3.connect("Calculator.db")
+curr = conn.cursor()
 
 variables = dict()
 while True:
@@ -36,11 +40,12 @@ while True:
 
     else:  # This is the parser to convert the infix to postfix notation
         if re.search(r"[\d]+[+/*-]-[\d]+", equation):  # Checks to make sure user did not put 5--5, 5+-5, etc.
-            print("Invalid expression 40")
-        elif re.match(r"^\+[\d]+$", equation):  # Checks if user did +#..., it will just print the number positive
-            print(equation[1:])
+            print("Invalid expression")
+        elif re.match(r"^[+-]+[\d]+$", equation):  # Checks if user did +#..., it will just print the number positive
+            print(re.findall(r"[-]?[\d]+", equation)[0])
         elif re.search(r"(?<![\w])[-]?[\d]", equation) is not None or re.search("[A-Za-z]+", equation) is not None:
-            vars = equation.split()
+            vars = re.split("([()+*/-]+)", equation)
+            vars = [var.strip() for var in vars if var != " "]
             operators = deque()  # This will store all of our operators for easy access (stack)
             computation = deque()  # This will store the postfix expression
             priorities = {"(": 0, "/": 2, "*": 2, "+": 1, "-": 1}
@@ -50,26 +55,30 @@ while True:
                     computation.append(variables[var])
                 elif var.isnumeric() or re.match(r"[+-][\d]+$", var) is not None:  # All digits
                     computation.append(var)
-                elif re.search(r"[(]+[\d]+", var) is not None:  # Left parenthesis
-                    computation.append("".join(re.findall("[\d]+", var)))
-                    for _ in range(len(var) - 1):
-                        operators.append("(")
-
-                elif re.search(r"[\d]+[)]+", var) is not None:  # Right parenthesis (pop until we find left p)
-                    computation.append("".join(re.findall("[\d]+", var)))
+                elif var == "(":  # Left parenthesis
+                    operators.append("(")
+                elif var == ")":  # Right parenthesis (pop until we find left p)
                     operator = operators.pop()
-                    while operator != "(":
-                        computation.append(operator)
-                        operator = operators.pop()
+                    try:
+                        while operator != "(":  # Keep adding to computation until we reach the left parenthese
+                            computation.append(operator)
+                            operator = operators.pop()
+                    except IndexError:
+                        print("Invalid expression")
+                        break
 
                 elif var.isalpha() and var not in variables:  # Invalid variable (STOP)
                     print("Unknown variable")
                     break
 
-                elif re.match("[+-]+$", var) is not None or re.match("[*/]$", var) is not None:  # Signage
+                elif re.match("[+-]+$", var) is not None or re.search("[*/]{2,}", var) is None:  # Signage
                     if len(var) % 2 == 0 and var.find("-") != -1:  # Two negatives = a positive
                         var = "+"
-                    adj_operator = var[0]  # Get rid of all the duplicates
+                    try:
+                        adj_operator = var[0]  # Get rid of all the duplicates
+                    except IndexError:
+                        print("Invalid expression")
+                        break
                     if len(operators) > 0:
                         operator = operators.pop()
                         while priorities[adj_operator] <= priorities[operator]:  # Keep popping if < due to PEMDAS
@@ -85,14 +94,15 @@ while True:
                 elif any(x.isalpha() for x in var) and any(x.isnumeric() for x in var):  # Makes sure var is valid
                     print("Invalid identifier")
                     break
-
-            while len(operators) > 0:  # There are no more symbols, push the rest of the operators 
-                computation.append(operators.pop())
-
             else:
+                while len(operators) > 0:  # There are no more symbols, push the rest of the operators
+                    computation.append(operators.pop())
+
                 try:
                     num_stack = deque()  # Num_stack will only have #'s that lead to the result
+                    print(computation)
                     while len(computation) > 0:
+                        print(num_stack)
                         sign = computation.popleft()
                         if re.match(r"^[+/*-]$", sign) is not None:
                             num2 = int(num_stack.pop())
