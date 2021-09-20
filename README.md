@@ -5,6 +5,8 @@
 <li>Variables stay in database for later usage</li>
 <h1>Directions</h1>
 <li>Enter an equation with <b>spaces</b> in between all numbers and operators but not parentheses</li>
+<li>2 ^ (2 * 2) is a valid equation</li>
+<li>2 ^ ( 2 * 2 ) and 2^(2*2) are not valid!</li>              
 <h1>Commands</h1>
 <li>/variables <- List all current variables</li>
 <li>/clear <- Clears all variables from variable list</li>
