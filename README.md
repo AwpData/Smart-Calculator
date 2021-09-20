@@ -4,7 +4,10 @@
 <li>You can store numbers in variables to call them later</li>
 <li>Variables stay in database for later usage</li>
 <h1>Directions</h1>
-<li>Enter an equation with <b>spaces</b> in between all numbers and operators but not parentheses</li>
+<li>Enter an equation with <b>spaces</b> in between all numbers and operators but not parentheses</li> 
+
+> This is mainly due to issues with negative number input (subtraction vs. negative sign)
+
 <li>2 ^ (2 * 2) is a valid equation</li>
 <li>2 ^ ( 2 * 2 ) and 2^(2*2) are not valid!</li>              
 <h1>Commands</h1>
